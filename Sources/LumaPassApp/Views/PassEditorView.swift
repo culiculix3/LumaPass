@@ -296,10 +296,11 @@ struct PassEditorView: View {
     }
 
     private var designFields: some View {
-        VStack(alignment: .leading, spacing: 17) {
+        let photoPickerTitle = isProcessingImage ? "Procesando imagen…" : "Elegir una imagen de Fotos"
+        return VStack(alignment: .leading, spacing: 17) {
             sectionHeading("Arte, color y contraste", subtitle: "Ajusta una imagen propia; los elementos esenciales del pase siguen siendo campos nativos.")
             PhotosPicker(selection: $selectedPhoto, matching: .images) {
-                Label(isProcessingImage ? "Procesando imagen…" : "Elegir una imagen de Fotos", systemImage: "photo.on.rectangle.angled")
+                Label(photoPickerTitle, systemImage: "photo.on.rectangle.angled")
                     .font(.subheadline.weight(.medium))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 13)

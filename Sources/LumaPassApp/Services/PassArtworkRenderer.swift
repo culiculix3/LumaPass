@@ -111,8 +111,8 @@ enum PassArtworkRenderer {
             let scale = max(artSize.width / uiImage.size.width, artSize.height / uiImage.size.height) * draft.imageScale
             let size = CGSize(width: uiImage.size.width * scale, height: uiImage.size.height * scale)
             let rect = CGRect(
-                x: (artSize.width - size.width) / 2 + draft.imageOffsetX,
-                y: (artSize.height - size.height) / 2 + draft.imageOffsetY,
+                x: (artSize.width - size.width) / CGFloat(2) + draft.imageOffsetX,
+                y: (artSize.height - size.height) / CGFloat(2) + draft.imageOffsetY,
                 width: size.width,
                 height: size.height
             )
