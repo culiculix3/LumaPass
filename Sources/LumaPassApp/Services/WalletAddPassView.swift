@@ -62,6 +62,7 @@ struct WalletAddPassView: UIViewControllerRepresentable {
             self.onCompletion = onCompletion
         }
 
+        @MainActor
         func addPassesViewControllerDidFinish(_ controller: PKAddPassesViewController) {
             if let pass {
                 onCompletion(pass, PKPassLibrary().containsPass(pass))
