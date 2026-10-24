@@ -5,4 +5,4 @@ PyJWT[crypto]>=2.10,<3
 boto3>=1.36,<2
 pillow>=11,<14
 python-multipart>=0.0.20,<1
-httpx[http2]>=0.28,<1
+httpx[http2]>=0.28.1,<1
