@@ -54,7 +54,8 @@ struct WalletAddPassView: UIViewControllerRepresentable {
         return controller
     }
 
-    final class Coordinator: NSObject, PKAddPassesViewControllerDelegate {
+    @MainActor
+    final class Coordinator: NSObject, @preconcurrency PKAddPassesViewControllerDelegate {
         let onCompletion: (PKPass, Bool) -> Void
         var pass: PKPass?
 
@@ -63,13 +64,10 @@ struct WalletAddPassView: UIViewControllerRepresentable {
         }
 
         func addPassesViewControllerDidFinish(_ controller: PKAddPassesViewController) {
-            DispatchQueue.main.async { [weak self, weak controller] in
-                guard let self, let controller else { return }
-                if let pass = self.pass {
-                    self.onCompletion(pass, PKPassLibrary().containsPass(pass))
-                }
-                controller.dismiss(animated: true)
+            if let pass {
+                onCompletion(pass, PKPassLibrary().containsPass(pass))
             }
+            controller.dismiss(animated: true)
         }
     }
 }
