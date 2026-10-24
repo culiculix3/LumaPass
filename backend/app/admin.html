@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>LumaPass · Moderación</title>
+  <style>
+    :root { color-scheme: dark; font: 16px system-ui, sans-serif; background: #121119; color: #f5f2ff }
+    body { max-width: 920px; margin: 0 auto; padding: 32px 18px 56px }
+    h1 { font-size: 1.7rem } p { color: #bdb6d0; line-height: 1.6 }
+    label, button, select { font: inherit }
+    input, select, button { border: 1px solid #514b61; border-radius: 10px; padding: 10px 12px; background: #211f2c; color: inherit }
+    input[type=password] { width: min(100%, 440px); margin: 4px 0 10px }
+    button { cursor: pointer } button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid #c7aaff }
+    .toolbar, .card { margin: 14px 0; padding: 16px; border: 1px solid #393544; border-radius: 15px; background: #1a1922 }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: end }
+    .toolbar label { display: grid; gap: 6px }
+    .card h2 { margin: 0 0 8px; font-size: 1rem }
+    .card p { margin: 7px 0; font-size: .9rem }
+    .actions { display: flex; gap: 8px; margin-top: 12px }
+    .notice { min-height: 1.5em; color: #c7aaff }
+    .error { color: #ffaaa4 }
+  </style>
+</head>
+<body>
+  <h1>Moderación LumaPass</h1>
+  <p>Herramienta administrativa. Los fondos se publican solo después de una revisión humana. No compartas el token del administrador.</p>
+  <div class="toolbar">
+    <label>Token de moderación <input id="admin-token" type="password" autocomplete="off" aria-label="Token administrativo"></label>
+    <label>Contenido
+      <select id="content-status" aria-label="Estado de revisión">
+        <option value="pending">Pendiente</option><option value="approved">Aprobado</option>
+        <option value="hidden">Oculto</option><option value="rejected">Rechazado</option>
+      </select>
+    </label>
+    <button id="load-assets" type="button">Cargar fondos</button>
+    <button id="load-reports" type="button">Cargar reportes</button>
+  </div>
+  <p id="notice" class="notice" role="status" aria-live="polite"></p>
+  <main id="items" aria-label="Contenido pendiente de moderación"></main>
+  <script>
+    const token = document.querySelector("#admin-token");
+    const notice = document.querySelector("#notice");
+    const items = document.querySelector("#items");
+    const contentStatus = document.querySelector("#content-status");
+
+    async function api(path, options = {}) {
+      const response = await fetch(path, {
+        ...options,
+        headers: { Authorization: `Bearer ${token.value}`, "Content-Type": "application/json" }
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({ detail: `HTTP ${response.status}` }));
+        throw new Error(body.detail || `HTTP ${response.status}`);
+      }
+      return response.status === 204 ? null : response.json();
+    }
+
+    function textElement(tag, text) {
+      const element = document.createElement(tag);
+      element.textContent = text;
+      return element;
+    }
+
+    async function loadAssets() {
+      notice.textContent = "Cargando fondos…";
+      try {
+        const list = await api(`/api/v1/admin/assets?status_filter=${encodeURIComponent(contentStatus.value)}`);
+        items.replaceChildren();
+        for (const asset of list) {
+          const card = document.createElement("article");
+          card.className = "card";
+          card.append(textElement("h2", asset.title));
+          card.append(textElement("p", asset.description));
+          card.append(textElement("p", `${asset.category} · ${asset.license} · Autor ${asset.authorId}`));
+          const actions = document.createElement("div");
+          actions.className = "actions";
+          for (const [label, value] of [["Aprobar", "approved"], ["Ocultar", "hidden"], ["Rechazar", "rejected"]]) {
+            const button = textElement("button", label);
+            button.type = "button";
+            button.addEventListener("click", async () => {
+              try {
+                await api(`/api/v1/admin/assets/${encodeURIComponent(asset.id)}`, {
+                  method: "PUT", body: JSON.stringify({ status: value })
+                });
+                await loadAssets();
+              } catch (error) { showError(error); }
+            });
+            actions.append(button);
+          }
+          card.append(actions);
+          items.append(card);
+        }
+        notice.textContent = `${list.length} fondo(s) encontrados.`;
+      } catch (error) { showError(error); }
+    }
+
+    async function loadReports() {
+      notice.textContent = "Cargando reportes…";
+      try {
+        const list = await api("/api/v1/admin/reports?status_filter=pending");
+        items.replaceChildren();
+        for (const report of list) {
+          const card = document.createElement("article");
+          card.className = "card";
+          card.append(textElement("h2", `${report.assetTitle} · ${report.reason}`));
+          card.append(textElement("p", report.detail || "Sin descripción adicional."));
+          const actions = document.createElement("div");
+          actions.className = "actions";
+          for (const [label, value] of [["Revisado", "reviewed"], ["Retirar fondo", "actioned"], ["Descartar", "dismissed"]]) {
+            const button = textElement("button", label);
+            button.type = "button";
+            button.addEventListener("click", async () => {
+              try {
+                await api(`/api/v1/admin/reports/${encodeURIComponent(report.id)}?status_filter=${value}`, { method: "PUT" });
+                await loadReports();
+              } catch (error) { showError(error); }
+            });
+            actions.append(button);
+          }
+          card.append(actions);
+          items.append(card);
+        }
+        notice.textContent = `${list.length} reporte(s) pendientes.`;
+      } catch (error) { showError(error); }
+    }
+
+    function showError(error) {
+      notice.textContent = `No se completó la solicitud: ${error.message}`;
+      notice.classList.add("error");
+    }
+
+    document.querySelector("#load-assets").addEventListener("click", loadAssets);
+    document.querySelector("#load-reports").addEventListener("click", loadReports);
+  </script>
+</body>
+</html>

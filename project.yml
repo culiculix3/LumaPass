@@ -1,0 +1,47 @@
+name: LumaPass
+options:
+  bundleIdPrefix: app.lumapass
+  deploymentTarget:
+    iOS: "17.0"
+targets:
+  LumaPass:
+    type: application
+    platform: iOS
+    sources:
+      - Sources/LumaPassApp
+    dependencies:
+      - package: LumaPass
+        product: LumaPassCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.lumapass.ios
+        INFOPLIST_KEY_CFBundleDisplayName: LumaPass
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
+        INFOPLIST_KEY_NSPhotoLibraryUsageDescription: Elige una imagen para el arte de tu pase.
+        INFOPLIST_KEY_LumaPassAPIBaseURL: $(LUMAPASS_API_BASE_URL)
+        LUMAPASS_API_BASE_URL: ""
+        SWIFT_VERSION: "6.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: NO
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_ENTITLEMENTS: Sources/LumaPassApp/LumaPass.entitlements
+    entitlements:
+      path: Sources/LumaPassApp/LumaPass.entitlements
+      properties:
+        com.apple.developer.applesignin:
+          - Default
+    scheme:
+      testTargets:
+        - LumaPassCoreTests
+  LumaPassCoreTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - Tests/LumaPassCoreTests
+    dependencies:
+      - package: LumaPass
+        product: LumaPassCore
+packages:
+  LumaPass:
+    path: .

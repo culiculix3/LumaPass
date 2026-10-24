@@ -1,0 +1,33 @@
+# Apple's Xcode build products, user state, and local signing artifacts.
+.DS_Store
+DerivedData/
+build/
+*.xcuserstate
+xcuserdata/
+*.mobileprovision
+*.p12
+*.p8
+*.cer
+*.pem
+*.key
+*.pkpass
+*.provisionprofile
+secrets/
+certificates/
+
+# Python and local configuration.
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# Test and dependency scanning output.
+coverage.xml
+htmlcov/
+pip-audit.json

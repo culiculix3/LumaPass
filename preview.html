@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111017">
+  <meta name="description" content="Vista previa interactiva de LumaPass para iPhone.">
+  <title>LumaPass — Vista previa</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --canvas: #111017;
+      --surface: #191720;
+      --elevated: #211f29;
+      --text: #f6f3fb;
+      --secondary: #a5a0ae;
+      --quiet: #6f6a79;
+      --accent: #d1baff;
+      --accent-dark: #211932;
+      --border: rgb(255 255 255 / 8%);
+      --mint: #adc8bc;
+      font: 15px -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box }
+    body {
+      min-width: 340px;
+      min-height: 100vh;
+      margin: 0;
+      padding: 27px 20px 43px;
+      color: var(--text);
+      background:
+        radial-gradient(ellipse at 53% 32%, rgb(113 82 161 / 10%), transparent 35rem),
+        #0c0b10;
+    }
+    button, input { font: inherit }
+    button { color: inherit }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(290px, 380px) minmax(360px, 550px);
+      align-items: start;
+      justify-content: center;
+      gap: clamp(45px, 9vw, 135px);
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+    .brand { padding: 7px 0 18px; }
+    .brand-mark {
+      display: inline-grid;
+      width: 40px;
+      height: 40px;
+      margin-bottom: 17px;
+      color: var(--accent);
+      place-items: center;
+      border: 1px solid rgb(209 186 255 / 22%);
+      border-radius: 15px;
+      background: linear-gradient(145deg, rgb(164 132 221 / 17%), rgb(255 255 255 / 3%));
+      font-size: 19px;
+    }
+    .brand h1 { margin: 0; font-size: 26px; font-weight: 650; letter-spacing: -.65px }
+    .brand p { margin: 5px 0 0; color: var(--secondary); font-size: 13px }
+    .eyebrow { color: var(--accent); font-size: 10px; font-weight: 650; letter-spacing: 1.8px }
+    .welcome { margin: 35px 0 21px; }
+    .welcome h2 {
+      max-width: 340px;
+      margin: 11px 0 10px;
+      font-size: clamp(31px, 4vw, 44px);
+      font-weight: 520;
+      line-height: 1.12;
+      letter-spacing: -1.65px;
+    }
+    .welcome > p { max-width: 320px; color: var(--secondary); font-size: 14px; line-height: 1.65 }
+    .steps { display: grid; gap: 9px; margin: 25px 0 23px; }
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 14px;
+      border: 1px solid var(--border);
+      border-radius: 17px;
+      background: rgb(255 255 255 / 2.6%);
+    }
+    .step-number {
+      display: grid;
+      width: 31px;
+      height: 31px;
+      flex: 0 0 auto;
+      color: var(--accent);
+      place-items: center;
+      border-radius: 11px;
+      background: rgb(209 186 255 / 9%);
+      font-size: 11px;
+    }
+    .step strong { display: block; margin-bottom: 2px; font-size: 12px; font-weight: 580 }
+    .step small { color: var(--secondary); font-size: 11px }
+    .button-main {
+      width: 100%;
+      padding: 14px 18px;
+      color: #17131e;
+      border: 0;
+      border-radius: 15px;
+      background: linear-gradient(120deg, #d9c6ff, #bdabeb);
+      font-weight: 650;
+      cursor: pointer;
+      transition: transform .18s, filter .18s;
+    }
+    .button-main:hover { filter: brightness(1.08); transform: translateY(-1px) }
+    .button-main:active { transform: scale(.99) }
+    .privacy {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-top: 14px;
+      color: var(--quiet);
+      font-size: 10px;
+      line-height: 1.55;
+    }
+    .phone {
+      position: relative;
+      width: min(100%, 393px);
+      min-height: 790px;
+      margin: 0 auto;
+      padding: 13px 14px 86px;
+      overflow: hidden;
+      border: 1px solid rgb(255 255 255 / 14%);
+      border-radius: 42px;
+      background: var(--canvas);
+      box-shadow: 0 38px 110px rgb(0 0 0 / 53%), 0 0 0 6px rgb(255 255 255 / 2.5%);
+    }
+    .statusbar {
+      display: flex;
+      height: 29px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px 5px;
+      color: #f7f3fb;
+      font-size: 11px;
+      font-weight: 620;
+    }
+    .status-icons { display: flex; align-items: center; gap: 5px; font-size: 9px }
+    .dynamic-island {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      width: 83px;
+      height: 22px;
+      border-radius: 20px;
+      background: #050506;
+      transform: translateX(-50%);
+    }
+    .screen-content { min-height: 675px; padding: 17px 9px 14px; }
+    .screen[hidden] { display: none }
+    .screen-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 23px }
+    .screen-head h2 { margin: 0; font-size: 24px; font-weight: 610; letter-spacing: -.7px }
+    .screen-subtitle { margin: 5px 0 0; color: var(--secondary); font-size: 12px }
+    .round-action {
+      display: grid;
+      width: 39px;
+      height: 39px;
+      color: var(--accent);
+      place-items: center;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      background: rgb(209 186 255 / 9%);
+      cursor: pointer;
+      font-size: 18px;
+    }
+    .hero {
+      position: relative;
+      min-height: 191px;
+      padding: 20px 18px;
+      overflow: hidden;
+      border: 1px solid rgb(255 255 255 / 9%);
+      border-radius: 23px;
+      background:
+        radial-gradient(ellipse at 91% 9%, rgb(187 162 241 / 23%), transparent 49%),
+        linear-gradient(142deg, #29223b, #1a1821 74%);
+    }
+    .hero::after {
+      position: absolute;
+      right: -28px;
+      bottom: -72px;
+      width: 184px;
+      height: 184px;
+      border: 1px solid rgb(210 191 255 / 14%);
+      border-radius: 50%;
+      box-shadow: 0 0 0 19px rgb(210 191 255 / 4%), 0 0 0 39px rgb(210 191 255 / 3%);
+      content: "";
+    }
+    .hero h3 { max-width: 260px; margin: 11px 0 15px; font-size: 27px; font-weight: 530; line-height: 1.13; letter-spacing: -.85px }
+    .hero .button-main { position: relative; z-index: 1; width: auto; padding: 10px 15px; font-size: 11px }
+    .card-section { margin-top: 23px }
+    .section-head { display: flex; align-items: center; justify-content: space-between; margin: 0 1px 12px }
+    .section-head h3 { margin: 0; font-size: 14px; font-weight: 570 }
+    .text-button { padding: 4px 0; color: var(--accent); border: 0; background: transparent; cursor: pointer; font-size: 10px }
+    .blank-card {
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: rgb(255 255 255 / 3%);
+    }
+    .blank-card-head { display: flex; align-items: center; justify-content: space-between; font-size: 11px; font-weight: 570 }
+    .blank-card-head span { color: var(--mint); font-size: 16px }
+    .blank-card p { margin: 9px 0 11px; color: var(--secondary); font-size: 11px; line-height: 1.5 }
+    .blank-card .text-button { font-size: 10px }
+    .collection { display: grid; grid-template-columns: 1fr 1fr; gap: 10px }
+    .mini-template { min-width: 0 }
+    .mini-template .art { height: 76px; margin-bottom: 7px; border-radius: 13px }
+    .mini-template strong { display: block; font-size: 10px; font-weight: 550 }
+    .mini-template small { color: var(--secondary); font-size: 9px }
+    .art { position: relative; overflow: hidden; background: linear-gradient(145deg, #40356f, #283144 65%, #849d91) }
+    .art::before {
+      position: absolute;
+      top: -42%;
+      right: -11%;
+      width: 67%;
+      height: 145%;
+      border: 1px solid rgb(255 255 255 / 31%);
+      border-radius: 50%;
+      background: radial-gradient(ellipse at 34% 52%, rgb(236 222 255 / 20%), transparent 66%);
+      content: "";
+      transform: rotate(19deg);
+    }
+    .art.wood { background: linear-gradient(141deg, #243a38, #53675a 59%, #c5a782) }
+    .art.neon { background: linear-gradient(141deg, #301e54, #71355f 58%, #eea176) }
+    .art.sun { background: linear-gradient(141deg, #574335, #bb8053 59%, #e3d0a3) }
+    .tabbar {
+      position: absolute;
+      right: 11px;
+      bottom: 9px;
+      left: 11px;
+      display: grid;
+      min-height: 64px;
+      grid-template-columns: repeat(5, 1fr);
+      align-items: center;
+      padding: 7px 3px 4px;
+      border: 1px solid rgb(255 255 255 / 8%);
+      border-radius: 24px;
+      background: rgb(28 27 35 / 95%);
+      backdrop-filter: blur(22px);
+    }
+    .tab {
+      display: grid;
+      min-height: 45px;
+      gap: 4px;
+      justify-items: center;
+      align-content: center;
+      color: var(--quiet);
+      border: 0;
+      border-radius: 16px;
+      background: transparent;
+      cursor: pointer;
+    }
+    .tab.active { color: var(--accent) }
+    .tab span:first-child { font-size: 17px; line-height: 1 }
+    .tab span:last-child { font-size: 8px }
+    .editor-preview {
+      position: relative;
+      min-height: 209px;
+      padding: 17px;
+      overflow: hidden;
+      border: 1px solid rgb(255 255 255 / 13%);
+      border-radius: 22px;
+      background:
+        radial-gradient(circle at 96% 12%, rgb(207 188 255 / 25%), transparent 32%),
+        linear-gradient(143deg, var(--card-colour, #40356f), #252436 79%);
+      box-shadow: 0 17px 40px rgb(43 32 66 / 32%);
+      transition: background .2s;
+    }
+    .editor-preview::after { position: absolute; inset: 12px; border: 1px dashed rgb(255 255 255 / 30%); border-radius: 15px; content: ""; pointer-events: none }
+    .safe-label { position: absolute; right: 20px; bottom: 16px; color: rgb(255 255 255 / 62%); font-size: 7px; letter-spacing: 1px }
+    .pass-org { position: relative; z-index: 1; font-size: 10px; font-weight: 600; letter-spacing: .6px }
+    .pass-kind { position: relative; z-index: 1; margin-top: 4px; color: rgb(255 255 255 / 66%); font-size: 8px; letter-spacing: 1.3px }
+    .pass-value { position: relative; z-index: 1; margin-top: 33px; font-size: 21px; font-weight: 560 }
+    .pass-fields { position: relative; z-index: 1; display: flex; gap: 30px; margin-top: 11px }
+    .pass-fields small { display: block; margin-bottom: 4px; color: rgb(255 255 255 / 65%); font-size: 8px; letter-spacing: .7px }
+    .pass-fields span { font-size: 10px }
+    .edit-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; border: 1px solid var(--border); border-radius: 17px; background: rgb(255 255 255 / 4%) }
+    .edit-tab { padding: 9px 5px; color: var(--secondary); border: 0; border-radius: 13px; background: transparent; cursor: pointer; font-size: 10px }
+    .edit-tab.active { color: #211932; background: var(--accent); font-weight: 600 }
+    .form-fields { display: grid; gap: 11px; padding: 15px; border: 1px solid var(--border); border-radius: 18px; background: rgb(255 255 255 / 3%) }
+    .form-fields h3 { margin: 0 0 2px; font-size: 13px; font-weight: 550 }
+    .field { display: grid; gap: 5px }
+    .field label { color: var(--secondary); font-size: 10px }
+    .field input { width: 100%; padding: 10px 11px; color: var(--text); border: 1px solid var(--border); border-radius: 11px; outline: 0; background: #1d1b25; font-size: 12px }
+    .field input:focus { border-color: rgb(209 186 255 / 53%) }
+    .colour-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px }
+    .colour { height: 36px; border: 2px solid transparent; border-radius: 11px; cursor: pointer }
+    .colour.selected { outline: 2px solid var(--accent); outline-offset: 2px }
+    .demo-note { padding: 11px 12px; color: #e0cb9e; border: 1px solid rgb(224 203 158 / 18%); border-radius: 13px; background: rgb(224 203 158 / 5%); font-size: 10px; line-height: 1.5 }
+    .search { width: 100%; margin-bottom: 12px; padding: 11px 13px; color: var(--text); border: 1px solid var(--border); border-radius: 13px; outline: 0; background: #1b1923; font-size: 11px }
+    .search:focus { border-color: rgb(209 186 255 / 50%) }
+    .category-row { display: flex; gap: 7px; margin-bottom: 14px; overflow-x: auto; scrollbar-width: none }
+    .category-chip { flex: 0 0 auto; padding: 7px 11px; color: var(--secondary); border: 1px solid var(--border); border-radius: 20px; background: rgb(255 255 255 / 3%); cursor: pointer; font-size: 9px }
+    .category-chip.selected { color: var(--accent); border-color: rgb(209 186 255 / 30%); background: rgb(209 186 255 / 8%) }
+    .explore-card { overflow: hidden; border: 1px solid var(--border); border-radius: 17px; background: rgb(255 255 255 / 3%) }
+    .explore-card .art { height: 95px }
+    .explore-meta { padding: 10px }
+    .explore-meta strong { font-size: 11px; font-weight: 550 }
+    .explore-meta small { display: block; margin-top: 4px; color: var(--secondary); font-size: 9px }
+    .explore-meta button { width: 100%; margin-top: 9px; padding: 8px; color: var(--accent); border: 0; border-radius: 10px; background: rgb(209 186 255 / 8%); cursor: pointer; font-size: 9px }
+    .designs-card { padding: 10px; border: 1px solid var(--border); border-radius: 20px; background: rgb(255 255 255 / 3%) }
+    .saved-info { display: flex; align-items: center; justify-content: space-between; padding: 10px 2px 3px; font-size: 10px }
+    .saved-info small { color: var(--secondary) }
+    .profile-card { padding: 17px; border: 1px solid var(--border); border-radius: 19px; background: rgb(255 255 255 / 3%) }
+    .profile-avatar { display: grid; width: 43px; height: 43px; margin-bottom: 12px; color: var(--accent); place-items: center; border-radius: 15px; background: rgb(209 186 255 / 10%); font-size: 18px }
+    .profile-card strong { font-size: 12px; font-weight: 560 }
+    .profile-card p { color: var(--secondary); font-size: 10px; line-height: 1.5 }
+    .profile-row { display: flex; justify-content: space-between; padding: 14px 2px; color: var(--text); border-bottom: 1px solid var(--border); font-size: 10px }
+    .profile-row span:last-child { color: var(--secondary) }
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      left: 18px;
+      z-index: 5;
+      width: fit-content;
+      max-width: 420px;
+      margin: auto;
+      padding: 12px 17px;
+      color: #f5f0ff;
+      border: 1px solid rgb(255 255 255 / 13%);
+      border-radius: 15px;
+      background: #24212e;
+      box-shadow: 0 12px 40px rgb(0 0 0 / 35%);
+      font-size: 11px;
+      line-height: 1.5;
+      animation: appear .2s ease-out;
+    }
+    @keyframes appear { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: translateY(0) } }
+    button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+    [hidden] { display: none !important }
+    @media (max-width: 820px) {
+      body { padding: 18px 15px 38px }
+      .layout { grid-template-columns: 1fr; gap: 27px }
+      .brand { display: flex; align-items: center; gap: 11px; padding: 4px 3px }
+      .brand-mark { width: 35px; height: 35px; margin: 0; border-radius: 13px }
+      .brand h1 { font-size: 19px }
+      .brand p { font-size: 11px }
+      .brand-copy { display: flex; align-items: baseline; gap: 8px }
+      .welcome { margin: 12px 2px 18px }
+      .welcome h2 { margin-top: 7px; font-size: 29px }
+      .welcome > p { margin-bottom: 12px; font-size: 12px }
+      .steps { display: none }
+      .layout > section:first-child > .button-main { max-width: 393px }
+      .layout > section:first-child > .privacy { max-width: 393px }
+      .phone { width: min(100%, 393px) }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important }
+    }
+    @media (forced-colors: active) {
+      .step, .blank-card, .designs-card, .profile-card, .explore-card { border: 1px solid CanvasText }
+    }
+  </style>
+</head>
+<body>
+  <main class="layout">
+    <section aria-label="Acerca de LumaPass">
+      <header class="brand">
+        <span class="brand-mark" aria-hidden="true">✳</span>
+        <div>
+          <h1>LumaPass</h1>
+          <p>Un pase, hecho a tu manera.</p>
+        </div>
+      </header>
+      <div class="welcome">
+        <span class="eyebrow">UNA PUESTA EN ESCENA INTERACTIVA</span>
+        <h2>Tu próxima idea cabe aquí.</h2>
+        <p>Explora el aspecto de la app iPhone y prueba la creación. Una ventana a LumaPass mientras terminamos la app nativa.</p>
+      </div>
+      <div class="steps" aria-label="Flujo de creación del pase">
+        <div class="step"><span class="step-number">01</span><div><strong>Empieza con una idea</strong><small>Elige uno de los cinco tipos de pase.</small></div></div>
+        <div class="step"><span class="step-number">02</span><div><strong>Hazlo tuyo</strong><small>Escoge un fondo y personaliza el diseño.</small></div></div>
+        <div class="step"><span class="step-number">03</span><div><strong>Guárdalo con calma</strong><small>Tus borradores de prueba se quedan aquí.</small></div></div>
+      </div>
+      <button class="button-main" type="button" id="start-create">Probar el flujo de creación &nbsp;→</button>
+      <p class="privacy">♧ &nbsp;Esta vista es una demostración local: no requiere iniciar sesión, no sube imágenes y no se conecta a Wallet.</p>
+    </section>
+
+    <section aria-label="Vista previa interactiva de LumaPass">
+      <div class="phone" id="phone">
+        <span class="dynamic-island" aria-hidden="true"></span>
+        <div class="statusbar" aria-label="Barra de estado del iPhone">
+          <span id="clock">9:41</span>
+          <span class="status-icons" aria-hidden="true">▂ ▄ ▆ &nbsp; ◉</span>
+        </div>
+        <div class="screen-content">
+          <section class="screen" data-screen="home">
+            <div class="screen-head">
+              <div><h2>LumaPass</h2><p class="screen-subtitle">Un pase, hecho a tu manera.</p></div>
+              <span class="round-action" aria-hidden="true">✳</span>
+            </div>
+            <div class="hero">
+              <span class="eyebrow">TU PRÓXIMA IDEA</span>
+              <h3>Crea algo que quieras llevar contigo.</h3>
+              <button class="button-main" type="button" data-action="create">＋ &nbsp; Crear un pase</button>
+            </div>
+            <section class="card-section">
+              <div class="section-head"><h3>Tu primera creación</h3><span class="eyebrow" aria-hidden="true">✳</span></div>
+              <div class="blank-card">
+                <div class="blank-card-head">Una pequeña colección <span>✧</span></div>
+                <p>Elige una idea, dale tu estilo y guarda un borrador privado.</p>
+                <button class="text-button" type="button" data-action="create">Empezar a crear &nbsp;→</button>
+              </div>
+            </section>
+            <section class="card-section">
+              <div class="section-head"><h3>Para inspirarte</h3><button class="text-button" type="button" data-action="explore">Explorar</button></div>
+              <div class="collection">
+                <div class="mini-template"><div class="art"></div><strong>Aurora</strong><small>Abstracto</small></div>
+                <div class="mini-template"><div class="art wood"></div><strong>Atelier</strong><small>Minimalista</small></div>
+              </div>
+            </section>
+          </section>
+
+          <section class="screen" data-screen="create" hidden>
+            <div class="screen-head"><div><h2>Crear</h2><p class="screen-subtitle">Una idea, con tu sello.</p></div></div>
+            <div class="section-head"><h3>01 &nbsp; Elige el tipo</h3></div>
+            <div class="form-fields" id="kind-picker">
+              <div class="kind-choice" role="button" tabindex="0" data-kind="generic">▱ &nbsp; Pase general <small> · Una tarjeta a tu manera.</small></div>
+              <div class="kind-choice" role="button" tabindex="0" data-kind="membership">♧ &nbsp; Membresía</div>
+              <div class="kind-choice" role="button" tabindex="0" data-kind="loyalty">✧ &nbsp; Fidelización</div>
+              <div class="kind-choice" role="button" tabindex="0" data-kind="coupon">◇ &nbsp; Cupón</div>
+              <div class="kind-choice" role="button" tabindex="0" data-kind="ticket">▤ &nbsp; Entrada</div>
+            </div>
+            <div class="section-head" style="margin-top:20px"><h3>02 &nbsp; Encuentra tu estilo</h3></div>
+            <div class="collection">
+              <button class="explore-card" type="button" data-template="Aurora" data-colour="#40356f" style="text-align:left"><div class="art"></div><div class="explore-meta"><strong>Aurora</strong><small>Abstracto · CC0 1.0</small></div></button>
+              <button class="explore-card" type="button" data-template="Atelier" data-colour="#243a38" style="text-align:left"><div class="art wood"></div><div class="explore-meta"><strong>Atelier</strong><small>Minimalista · CC0 1.0</small></div></button>
+              <button class="explore-card" type="button" data-template="Afterglow" data-colour="#54245f" style="text-align:left"><div class="art neon"></div><div class="explore-meta"><strong>Afterglow</strong><small>Neón · CC0 1.0</small></div></button>
+              <button class="explore-card" type="button" data-template="Sunroom" data-colour="#714c31" style="text-align:left"><div class="art sun"></div><div class="explore-meta"><strong>Sunroom</strong><small>Naturaleza · CC0 1.0</small></div></button>
+            </div>
+            <button class="button-main" style="margin-top:18px" type="button" data-action="edit">Personalizar mi pase &nbsp;→</button>
+          </section>
+
+          <section class="screen" data-screen="explore" hidden>
+            <div class="screen-head"><div><h2>Explorar</h2><p class="screen-subtitle">Una galería hecha para inspirar.</p></div></div>
+            <input class="search" id="search" type="search" placeholder="⌕  Busca una idea o un color" aria-label="Buscar fondos">
+            <div class="category-row" id="categories">
+              <button class="category-chip selected" type="button" data-category="all">Todo</button>
+              <button class="category-chip" type="button" data-category="Minimalista">Minimalista</button>
+              <button class="category-chip" type="button" data-category="Abstracto">Abstracto</button>
+              <button class="category-chip" type="button" data-category="Neón">Neón</button>
+              <button class="category-chip" type="button" data-category="Naturaleza">Naturaleza</button>
+            </div>
+            <div class="collection" id="gallery">
+              <article class="explore-card" data-title="Aurora" data-cat="Abstracto"><div class="art"></div><div class="explore-meta"><strong>Aurora</strong><small>✧ &nbsp; LumaPass Studio · 1.482 usos</small><button type="button" data-action="use-template" data-template="Aurora" data-colour="#40356f">Aplicar diseño</button></div></article>
+              <article class="explore-card" data-title="Atelier" data-cat="Minimalista"><div class="art wood"></div><div class="explore-meta"><strong>Atelier</strong><small>✧ &nbsp; LumaPass Studio · 1.206 usos</small><button type="button" data-action="use-template" data-template="Atelier" data-colour="#243a38">Aplicar diseño</button></div></article>
+              <article class="explore-card" data-title="Afterglow" data-cat="Neón"><div class="art neon"></div><div class="explore-meta"><strong>Afterglow</strong><small>✧ &nbsp; LumaPass Studio · 982 usos</small><button type="button" data-action="use-template" data-template="Afterglow" data-colour="#54245f">Aplicar diseño</button></div></article>
+              <article class="explore-card" data-title="Sunroom" data-cat="Naturaleza"><div class="art sun"></div><div class="explore-meta"><strong>Sunroom</strong><small>✧ &nbsp; LumaPass Studio · 729 usos</small><button type="button" data-action="use-template" data-template="Sunroom" data-colour="#714c31">Aplicar diseño</button></div></article>
+            </div>
+          </section>
+
+          <section class="screen" data-screen="designs" hidden>
+            <div class="screen-head"><div><h2>Mis diseños</h2><p class="screen-subtitle">Tus ideas, a tu ritmo.</p></div><button class="round-action" type="button" data-action="create" aria-label="Crear un diseño">＋</button></div>
+            <div id="empty-designs" class="blank-card"><div class="blank-card-head">Aquí empieza tu colección <span>✧</span></div><p>Tus borradores son privados y se quedan en esta vista previa local.</p><button class="text-button" type="button" data-action="create">Crear el primero &nbsp;→</button></div>
+            <div id="saved-designs" class="collection" hidden></div>
+          </section>
+
+          <section class="screen" data-screen="profile" hidden>
+            <div class="screen-head"><div><h2>Perfil</h2><p class="screen-subtitle">Tu espacio privado.</p></div></div>
+            <div class="profile-card"><div class="profile-avatar">✳</div><strong>Una cuenta sin complicaciones.</strong><p>Esta demo no necesita iniciar sesión. La app nativa usa Sign in with Apple si la cuenta lo necesita.</p></div>
+            <div class="card-section"><div class="section-head"><h3>Preferencias</h3></div><button class="profile-row" id="theme-toggle" type="button" style="width:100%;text-align:left"><span>Apariencia</span><span>Oscura &nbsp; ◐</span></button></div>
+            <div class="card-section"><div class="section-head"><h3>Información</h3></div><div class="profile-row"><span>Privacidad</span><span>›</span></div><div class="profile-row"><span>Condiciones de uso</span><span>›</span></div><div class="profile-row"><span>Licencias y créditos</span><span>Apache-2.0</span></div></div>
+            <div class="demo-note" style="margin-top:20px">No se almacenan datos bancarios. LumaPass crea pases legítimos; no modifica ni reproduce tarjetas de pago.</div>
+          </section>
+
+          <section class="screen" data-screen="editor" hidden>
+            <div class="screen-head"><div><h2>Tu pase</h2><p class="screen-subtitle">Haz que se sienta tuyo.</p></div><button class="text-button" type="button" data-action="designs">Cerrar</button></div>
+            <div class="editor-preview" id="pass-preview">
+              <div class="pass-org" id="preview-org">TU ORGANIZACIÓN</div>
+              <div class="pass-kind" id="preview-kind">PASE GENERAL</div>
+              <div class="pass-value" id="preview-title">Tu nuevo pase</div>
+              <div class="pass-fields"><div><small>TITULAR</small><span id="preview-holder">Añade un nombre</span></div><div><small>CATEGORÍA</small><span id="preview-detail">A tu manera</span></div></div>
+              <span class="safe-label">ZONA SEGURA</span>
+            </div>
+            <p class="privacy" style="margin:11px 2px 14px">Vista orientativa. Apple Wallet adapta el pase al dispositivo y la versión de iOS.</p>
+            <div class="edit-tabs" role="tablist" aria-label="Secciones del editor"><button class="edit-tab active" data-edit="details" role="tab">Detalles</button><button class="edit-tab" data-edit="design" role="tab">Diseño</button><button class="edit-tab" data-edit="barcode" role="tab">Código</button></div>
+            <div id="panel-details" class="form-fields" style="margin-top:12px">
+              <h3>La información de tu pase</h3>
+              <div class="field"><label for="field-title">Nombre del pase</label><input id="field-title" maxlength="100" placeholder="p. ej., Club Aurora"></div>
+              <div class="field"><label for="field-org">Nombre visible</label><input id="field-org" maxlength="100" placeholder="p. ej., Estudio Aurora"></div>
+              <div class="field"><label for="field-holder">Campo principal</label><input id="field-holder" maxlength="100" placeholder="Tu nombre o número"></div>
+              <div class="field"><label for="field-detail">Campo secundario</label><input id="field-detail" maxlength="100" placeholder="Tu nivel o sector"></div>
+            </div>
+            <div id="panel-design" class="form-fields" style="margin-top:12px" hidden>
+              <h3>Elige una paleta</h3>
+              <div class="colour-row"><button class="colour selected" type="button" data-colour="#40356f" style="background:linear-gradient(145deg,#40356f,#282a41)" aria-label="Púrpura aurora"></button><button class="colour" type="button" data-colour="#243a38" style="background:linear-gradient(145deg,#243a38,#71866c)" aria-label="Verde atelier"></button><button class="colour" type="button" data-colour="#54245f" style="background:linear-gradient(145deg,#54245f,#b56687)" aria-label="Neón violeta"></button><button class="colour" type="button" data-colour="#714c31" style="background:linear-gradient(145deg,#714c31,#cf9b69)" aria-label="Dorado sunroom"></button></div>
+              <div class="field"><label for="file-picker">Tu imagen (en la app nativa)</label><input id="file-picker" type="file" accept="image/png,image/jpeg" aria-describedby="file-note"></div>
+              <small id="file-note" style="color:var(--secondary);font-size:9px">La demo es local y no sube ni guarda la imagen elegida.</small>
+              <label class="field" for="image-contrast">Contraste del arte <input id="image-contrast" type="range" min="1" max="10" value="5"></label>
+              <label class="field" for="image-brightness">Brillo del arte <input id="image-brightness" type="range" min="1" max="10" value="5"></label>
+              <label class="field" for="image-zoom">Zoom del arte <input id="image-zoom" type="range" min="1" max="10" value="3"></label>
+            </div>
+            <div id="panel-barcode" class="form-fields" style="margin-top:12px" hidden>
+              <h3>Código del pase</h3>
+              <div class="field"><label for="field-code">Un dato que tengas derecho a usar</label><input id="field-code" maxlength="512" placeholder="Un enlace o identificador propio"></div>
+              <div class="edit-tabs" style="padding:3px"><button class="edit-tab active" type="button" data-format="QR">QR</button><button class="edit-tab" type="button" data-format="Code 128">Code 128</button><button class="edit-tab" type="button" data-format="PDF417">PDF417</button></div>
+              <div class="demo-note">La vista del código es ilustrativa y no se puede escanear. No uses datos bancarios, ni códigos de pases de otras personas.</div>
+            </div>
+            <button class="button-main" type="button" data-action="save" style="margin-top:13px">Guardar borrador privado</button>
+            <div class="demo-note" style="margin-top:11px">Vista previa interactiva. En la app iOS real, la firma requiere certificados Apple en el servidor y «Añadir a Apple Wallet» usa el flujo oficial de PassKit.</div>
+          </section>
+        </div>
+        <nav class="tabbar" aria-label="Navegación principal">
+          <button class="tab active" type="button" data-tab="home"><span aria-hidden="true">✳</span><span>Inicio</span></button>
+          <button class="tab" type="button" data-tab="create"><span aria-hidden="true">⊞</span><span>Crear</span></button>
+          <button class="tab" type="button" data-tab="explore"><span aria-hidden="true">▦</span><span>Explorar</span></button>
+          <button class="tab" type="button" data-tab="designs"><span aria-hidden="true">▤</span><span>Mis diseños</span></button>
+          <button class="tab" type="button" data-tab="profile"><span aria-hidden="true">◉</span><span>Perfil</span></button>
+        </nav>
+      </div>
+    </section>
+  </main>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <script>
+    const phone = document.querySelector("#phone");
+    let currentScreen = "home";
+    let chosenKind = "generic";
+    let chosenTemplate = "Aurora";
+    let chosenColor = "#40356f";
+    let favorites = new Set();
+    let toastTimer;
+
+    function notify(message) {
+      const toast = document.querySelector("#toast");
+      toast.textContent = message;
+      toast.hidden = false;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { toast.hidden = true; }, 3000);
+    }
+
+    function showScreen(screen, tab = screen) {
+      const target = screen === "editor" ? "editor" : screen;
+      if (!phone.querySelector(`[data-screen="${target}"]`)) return;
+      currentScreen = target;
+      phone.querySelectorAll(".screen").forEach((element) => {
+        element.hidden = element.dataset.screen !== target;
+      });
+      phone.querySelectorAll(".tab").forEach((element) => {
+        const selected = element.dataset.tab === tab;
+        element.classList.toggle("active", selected);
+        element.setAttribute("aria-current", selected ? "page" : "false");
+      });
+      phone.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    function openEditor() {
+      document.querySelector("#preview-kind").textContent = {
+        generic: "PASE GENERAL",
+        membership: "MEMBRESÍA",
+        loyalty: "FIDELIZACIÓN",
+        coupon: "CUPÓN",
+        ticket: "ENTRADA"
+      }[chosenKind];
+      document.querySelector("#preview-title").textContent =
+        document.querySelector("#field-title").value.trim() || chosenTemplate;
+      document.querySelector("#preview-org").textContent =
+        document.querySelector("#field-org").value.trim() || "TU ORGANIZACIÓN";
+      document.querySelector("#pass-preview").style.setProperty("--card-colour", chosenColor);
+      showScreen("editor", "create");
+    }
+
+    document.querySelector("#clock").textContent =
+      new Intl.DateTimeFormat("es-ES", { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date());
+
+    document.querySelectorAll(".tab").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (button.dataset.tab === "create") showScreen("create", "create");
+        else showScreen(button.dataset.tab);
+      });
+    });
+
+    document.querySelector("#start-create").addEventListener("click", () => showScreen("create", "create"));
+    phone.addEventListener("click", (event) => {
+      const target = event.target.closest("[data-action]");
+      if (!target) return;
+      switch (target.dataset.action) {
+        case "create": showScreen("create", "create"); break;
+        case "explore": showScreen("explore"); break;
+        case "edit": openEditor(); break;
+        case "use-template":
+          chosenTemplate = target.dataset.template;
+          chosenColor = target.dataset.colour;
+          openEditor();
+          break;
+        case "save":
+          saveDraft();
+          break;
+        case "designs":
+          showScreen("designs");
+          break;
+      }
+    });
+
+    document.querySelectorAll(".kind-choice").forEach((choice) => {
+      choice.style.cursor = "pointer";
+      choice.addEventListener("click", () => {
+        chosenKind = choice.dataset.kind;
+        document.querySelectorAll(".kind-choice").forEach((item) => {
+          item.style.borderColor = item === choice ? "rgb(209 186 255 / 45%)" : "var(--border)";
+        });
+        notify(`Has elegido: ${choice.textContent.trim()}.`);
+      });
+      choice.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          choice.click();
+        }
+      });
+    });
+
+    document.querySelectorAll("[data-template][data-colour]").forEach((button) => {
+      button.addEventListener("click", () => {
+        chosenTemplate = button.dataset.template;
+        chosenColor = button.dataset.colour;
+        document.querySelectorAll("#gallery [data-template]").forEach((item) => {
+          item.textContent = favorites.has(item.dataset.template) ? "♡  Guardado" : "Aplicar diseño";
+        });
+      });
+    });
+
+    document.querySelectorAll(".edit-tab[data-edit]").forEach((button) => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".edit-tab[data-edit]").forEach((item) => item.classList.toggle("active", item === button));
+        document.querySelector("#panel-details").hidden = button.dataset.edit !== "details";
+        document.querySelector("#panel-design").hidden = button.dataset.edit !== "design";
+        document.querySelector("#panel-barcode").hidden = button.dataset.edit !== "barcode";
+      });
+    });
+
+    document.querySelectorAll(".colour").forEach((button) => {
+      button.addEventListener("click", () => {
+        chosenColor = button.dataset.colour;
+        document.querySelectorAll(".colour").forEach((item) => item.classList.toggle("selected", item === button));
+        document.querySelector("#pass-preview").style.setProperty("--card-colour", chosenColor);
+      });
+    });
+
+    for (const [inputID, previewID] of [
+      ["field-title", "preview-title"],
+      ["field-org", "preview-org"],
+      ["field-holder", "preview-holder"],
+      ["field-detail", "preview-detail"]
+    ]) {
+      document.querySelector(`#${inputID}`).addEventListener("input", (event) => {
+        const fallback = {
+          "field-title": chosenTemplate,
+          "field-org": "TU ORGANIZACIÓN",
+          "field-holder": "Añade un nombre",
+          "field-detail": "A tu manera"
+        }[inputID];
+        document.querySelector(`#${previewID}`).textContent = event.target.value || fallback;
+      });
+    }
+
+    const galleryCards = [...document.querySelectorAll("#gallery .explore-card")];
+    document.querySelector("#search").addEventListener("input", filterGallery);
+    document.querySelectorAll(".category-chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        document.querySelectorAll(".category-chip").forEach((item) => item.classList.toggle("selected", item === chip));
+        filterGallery();
+      });
+    });
+
+    function filterGallery() {
+      const query = document.querySelector("#search").value.trim().toLocaleLowerCase("es");
+      const category = document.querySelector(".category-chip.selected").dataset.category;
+      galleryCards.forEach((card) => {
+        const matchesText = card.dataset.title.toLocaleLowerCase("es").includes(query);
+        const matchesCategory = category === "all" || card.dataset.cat === category;
+        card.hidden = !(matchesText && matchesCategory);
+      });
+    }
+
+    function saveDraft() {
+      const title = document.querySelector("#field-title").value.trim();
+      const organization = document.querySelector("#field-org").value.trim();
+      if (!title || !organization) {
+        notify("Para guardar el borrador, escribe el nombre del pase y el nombre visible.");
+        document.querySelector("#field-title").focus();
+        return;
+      }
+      let drafts = [];
+      try {
+        drafts = JSON.parse(sessionStorage.getItem("lumapass-preview-drafts") || "[]");
+      } catch {
+        notify("No se pudieron leer los borradores de esta sesión.");
+        return;
+      }
+      const draft = {
+        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        title,
+        organization,
+        kind: chosenKind,
+        template: chosenTemplate,
+        color: chosenColor
+      };
+      drafts.unshift(draft);
+      try {
+        sessionStorage.setItem("lumapass-preview-drafts", JSON.stringify(drafts));
+      } catch {
+        notify("El navegador no pudo guardar el borrador de esta sesión.");
+        return;
+      }
+      renderDrafts();
+      notify("Borrador guardado temporalmente en esta sesión de navegador.");
+      showScreen("designs");
+    }
+
+    function renderDrafts() {
+      let drafts = [];
+      try { drafts = JSON.parse(sessionStorage.getItem("lumapass-preview-drafts") || "[]"); }
+      catch { drafts = []; }
+      document.querySelector("#empty-designs").hidden = drafts.length > 0;
+      const collection = document.querySelector("#saved-designs");
+      collection.replaceChildren();
+      collection.hidden = drafts.length === 0;
+      for (const draft of drafts) {
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className = "explore-card";
+        card.style.textAlign = "left";
+        const art = document.createElement("div");
+        art.className = "art";
+        art.style.background = `linear-gradient(145deg, ${draft.color}, #282a41 75%)`;
+        const meta = document.createElement("div");
+        meta.className = "explore-meta";
+        const heading = document.createElement("strong");
+        heading.textContent = draft.title;
+        const subheading = document.createElement("small");
+        subheading.textContent = `${draft.organization} · ${draft.template}`;
+        meta.append(heading, subheading);
+        card.append(art, meta);
+        card.addEventListener("click", () => {
+          chosenKind = draft.kind;
+          chosenTemplate = draft.template;
+          chosenColor = draft.color;
+          document.querySelector("#field-title").value = draft.title;
+          document.querySelector("#field-org").value = draft.organization;
+          openEditor();
+        });
+        collection.append(card);
+      }
+    }
+
+    document.querySelectorAll('[data-screen="create"] [data-template]').forEach((button) => {
+      button.addEventListener("click", () => {
+        chosenTemplate = button.dataset.template;
+        chosenColor = button.dataset.colour;
+        document.querySelectorAll(".explore-card").forEach((item) => item.style.outline = item === button ? "2px solid var(--accent)" : "none");
+      });
+    });
+
+    document.querySelector("#theme-toggle").addEventListener("click", () => {
+      notify("La vista previa refleja el modo oscuro predeterminado de LumaPass.");
+    });
+    renderDrafts();
+  </script>
+</body>
+</html>
