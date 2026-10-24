@@ -72,19 +72,12 @@ jobs:
           xcodebuild \
             -project LumaPass.xcodeproj \
             -scheme LumaPass \
-            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath .derivedData \
             CODE_SIGNING_ALLOWED=NO \
             build
       - name: Run iOS core unit tests
-        run: |
-          xcodebuild \
-            -project LumaPass.xcodeproj \
-            -scheme LumaPass \
-            -destination 'platform=iOS Simulator,name=iPhone 16' \
-            -derivedDataPath .derivedData \
-            CODE_SIGNING_ALLOWED=NO \
-            test
+        run: swift test --parallel
       - name: Check for leaked signing material
         run: |
           if find . -type f \( -name '*.p12' -o -name '*.p8' -o -name '*.mobileprovision' \) | grep -q .; then
