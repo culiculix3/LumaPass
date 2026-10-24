@@ -2,7 +2,7 @@ import hashlib
 import json
 import re
 import secrets
-import subprocess
+import subprocess  # nosec B404 -- used only to invoke fixed OpenSSL arguments without a shell.
 import tempfile
 import uuid
 import zipfile
@@ -295,7 +295,7 @@ def _sign_manifest(manifest_path: Path, output_path: Path) -> None:
     if settings.pass_private_key_passphrase:
         command.extend(["-passin", "stdin"])
     try:
-        completed = subprocess.run(
+        completed = subprocess.run(  # nosec B603 -- fixed argv; user content is not an argument.
             command,
             check=False,
             capture_output=True,

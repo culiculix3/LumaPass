@@ -127,9 +127,9 @@ public struct PassDraft: Codable, Identifiable, Equatable, Sendable {
             primaryLabel: kind == .coupon ? "DESCUENTO" : "TITULAR",
             secondaryLabel: kind == .ticket ? "FECHA" : "CATEGORÍA",
             additionalLabel: "NÚMERO",
-            templateID: template.id,
             backgroundHex: template.backgroundHex,
-            foregroundHex: template.foregroundHex
+            foregroundHex: template.foregroundHex,
+            templateID: template.id
         )
     }
 }
