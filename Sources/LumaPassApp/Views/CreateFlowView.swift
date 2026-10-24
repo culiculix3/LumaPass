@@ -88,7 +88,7 @@ struct CreateFlowView: View {
                 }
                 Spacer()
                 Image(systemName: isSelected ? "largecircle.fill.circle" : "circle")
-                    .foregroundStyle(isSelected ? Color.lumaAccent : .tertiary)
+                    .foregroundStyle(isSelected ? Color.lumaAccent : Color.secondary)
             }
             .padding(13)
             .background(Color.lumaSurface.opacity(isSelected ? 0.09 : 0.035), in: RoundedRectangle(cornerRadius: 19))
